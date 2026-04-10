@@ -60,6 +60,7 @@ class CarController(CarControllerBase):
       if CS.loopback_lka_steering_cmd_ts_nanos == 0 or out_of_sync:
         steer_step = self.params.STEER_STEP
 
+    # @atoms VIF-050 — CAN Message Integrity
     self.lka_steering_cmd_counter += 1 if CS.loopback_lka_steering_cmd_updated else 0
 
     # Avoid GM EPS faults when transmitting messages too close together: skip this transmit if we
@@ -79,6 +80,7 @@ class CarController(CarControllerBase):
       self.last_steer_frame = self.frame
       self.apply_torque_last = apply_torque
       idx = self.lka_steering_cmd_counter % 4
+      # @atoms VIF-041 — Transmit Steering Angle Command
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_torque, idx, CC.latActive))
 
     if self.CP.openpilotLongitudinalControl:
@@ -113,6 +115,7 @@ class CarController(CarControllerBase):
         can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, friction_brake_bus, self.apply_brake,
                                                              idx, CC.enabled, near_stop, at_full_stop, self.CP))
 
+        # @atoms VIF-043 — Transmit HUD Messages
         # Send dashboard UI commands (ACC status)
         send_fcw = hud_alert == VisualAlert.fcw
         can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, CC.enabled,
@@ -142,6 +145,8 @@ class CarController(CarControllerBase):
       # A delayed cancellation allows camera to cancel and avoids a fault when user depresses brake quickly
       self.cancel_counter = self.cancel_counter + 1 if CC.cruiseControl.cancel else 0
 
+      # @atoms VIF-042 — Transmit Cruise Buttons
+      # @atoms ACC-010 — Cruise Speed via CAN Buttons
       # Stock longitudinal, integrated at camera
       if (self.frame - self.last_button_frame) * DT_CTRL > 0.04:
         if self.cancel_counter > CAMERA_CANCEL_DELAY_FRAMES:

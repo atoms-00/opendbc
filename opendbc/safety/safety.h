@@ -140,6 +140,7 @@ static void update_addr_timestamp(RxCheck addr_list[], int index) {
   }
 }
 
+// @atoms SAF-032 — CAN Counter Validation
 static void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
   if (index != -1) {
     uint8_t expected_counter = (addr_list[index].status.last_counter + 1U) % (addr_list[index].msg[addr_list[index].status.index].max_counter + 1U);
@@ -157,6 +158,7 @@ static bool rx_msg_safety_check(const CANPacket_t *msg,
   update_addr_timestamp(cfg->rx_checks, index);
 
   if (index != -1) {
+    // @atoms SAF-033 — CAN Checksum Validation
     // checksum check
     if ((safety_hooks->get_checksum != NULL) && (safety_hooks->compute_checksum != NULL) && !cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].ignore_checksum) {
       uint32_t checksum = safety_hooks->get_checksum(msg);
@@ -215,6 +217,7 @@ bool safety_rx_hook(const CANPacket_t *msg) {
   return valid;
 }
 
+// @atoms SAF-031 — ADAS-Only CAN TX Whitelist
 static bool tx_msg_safety_check(const CANPacket_t *msg, const CanMsg msg_list[], int len) {
   int addr = msg->addr;
   int length = GET_LEN(msg);
@@ -308,6 +311,7 @@ void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
   }
 }
 
+// @atoms SAF-041 — Heartbeat Watchdog
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const safety_config *cfg) {
   const uint8_t MAX_MISSED_MSGS = 10U;

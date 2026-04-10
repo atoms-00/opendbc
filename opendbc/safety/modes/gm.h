@@ -51,6 +51,7 @@ static void gm_rx_hook(const CANPacket_t *msg) {
     if ((msg->addr == 0x1E1U) && !gm_pcm_cruise) {
       int button = (msg->data[5] & 0x70U) >> 4;
 
+      // @atoms SAF-011 — Engage via Cruise Stalk
       // enter controls on falling edge of set or rising edge of resume (avoids fault)
       bool set = (button != GM_BTN_SET) && (cruise_button_prev == GM_BTN_SET);
       bool res = (button == GM_BTN_RESUME) && (cruise_button_prev != GM_BTN_RESUME);
@@ -58,6 +59,7 @@ static void gm_rx_hook(const CANPacket_t *msg) {
         controls_allowed = true;
       }
 
+      // @atoms SAF-014 — Cruise Cancel
       // exit controls on cancel press
       if (button == GM_BTN_CANCEL) {
         controls_allowed = false;
@@ -66,6 +68,7 @@ static void gm_rx_hook(const CANPacket_t *msg) {
       cruise_button_prev = button;
     }
 
+    // @atoms SAF-012 — Brake Cancel
     // Reference for brake pressed signals:
     // https://github.com/commaai/openpilot/blob/master/selfdrive/car/gm/carstate.py
     if ((msg->addr == 0xBEU) && (gm_hw == GM_ASCM)) {
@@ -76,6 +79,7 @@ static void gm_rx_hook(const CANPacket_t *msg) {
       brake_pressed = GET_BIT(msg, 40U);
     }
 
+    // @atoms SAF-013 — Gas Cancel
     if (msg->addr == 0x1C4U) {
       gas_pressed = msg->data[5] != 0U;
 
@@ -93,6 +97,7 @@ static void gm_rx_hook(const CANPacket_t *msg) {
 }
 
 static bool gm_tx_hook(const CANPacket_t *msg) {
+  // @atoms SAF-021 — Steering Angle Rate Limit — ISO 11270
   const TorqueSteeringLimits GM_STEERING_LIMITS = {
     .max_torque = 300,
     .max_rate_up = 10,
@@ -169,6 +174,7 @@ static safety_config gm_init(uint16_t param) {
     .max_brake = 400,
   };
 
+  // @atoms SAF-031 — ADAS-Only CAN TX Whitelist
   static const CanMsg GM_ASCM_TX_MSGS[] = {{0x180, 0, 4, .check_relay = true}, {0x409, 0, 7, .check_relay = false}, {0x40A, 0, 7, .check_relay = false}, {0x2CB, 0, 8, .check_relay = true}, {0x370, 0, 6, .check_relay = false},  // pt bus
                                            {0xA1, 1, 7, .check_relay = false}, {0x306, 1, 8, .check_relay = false}, {0x308, 1, 7, .check_relay = false}, {0x310, 1, 2, .check_relay = false},   // obs bus
                                            {0x315, 2, 5, .check_relay = false}};  // ch bus

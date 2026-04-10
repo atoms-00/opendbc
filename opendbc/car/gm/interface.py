@@ -84,6 +84,7 @@ class CarInterface(CarInterfaceBase):
     else:
       return self.lateral_accel_from_torque_linear
 
+  # @atoms VIF-010 — Vehicle Fingerprinting
   @staticmethod
   def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, alpha_long, is_release, docs) -> structs.CarParams:
     ret.brand = "gm"
@@ -99,6 +100,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.longitudinalTuning.kiBP = [5., 35.]
 
+    # @atoms ACC-012 — No Longitudinal Commands
     if candidate in (CAMERA_ACC_CAR | SDGM_CAR):
       ret.alphaLongitudinalAvailable = candidate not in SDGM_CAR
       ret.networkLocation = NetworkLocation.fwdCamera
